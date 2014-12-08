@@ -1,24 +1,5 @@
 require 'colorize'
 
-def get_response(input)
-  key = RESPONSES.keys.select {|k| /#{k}/ =~ input }.sample	 # selects key from the hash that matches the imput
-  /#{key}/ =~ input	 # creates a regex from the input
-  response = RESPONSES[key]	# sets variable 'response' which equates to the value matching the key in the hash
-  print @bot
-  if response.nil? # (if) response.nil? (than return) ? 'sorry?' (else): match you word($1) with regex in RESPONSES[key]value 
-  	'sorry?'
-  else response % { c1: $1, c2: $2, c3: $3}
-  end
-end
-
-def add_response
-	puts "what question would you like to add?"
-	input = gets.chomp
-	puts "what should the response be?"
-	output = gets.chomp
-	RESPONSES[input] = output
-end
-
 RESPONSES = { 'goodbye' => 'bye', 
               'sayonara' => 'sayonara', 
               'the weather is (.*)' => 'I hate it when it\'s %{c1}', 
@@ -30,34 +11,60 @@ RESPONSES = { 'goodbye' => 'bye',
               'my favourite film is (.*)' => '%{c1} is my favourite too',
               'the sky is blue' => 'Yes it is' }
 
+def say(message)
+  puts "bot:   ".colorize(:red) + message
+end
+
+def wait_for_user
+  print "user:  ".colorize(:green)
+  gets.chomp
+end
+
+def get_response(input)
+  key = RESPONSES.keys.select {|k| /#{k}/ =~ input }.sample	
+  /#{key}/ =~ input	
+  response = RESPONSES[key]
+  print @bot
+  if response.nil? 
+  	'sorry?'
+  else response % { c1: $1, c2: $2, c3: $3}
+  end
+end
+
+def add_response
+	say ("what question would you like to add?")
+	input = wait_for_user
+	say ("what should the response be?")
+	output = wait_for_user
+	RESPONSES[input] = output
+end
 
 def save_file
   File.open("responses.csv", "w") do |file|
     RESPONSES.each do |key,value|
-      responses_data = [RESPONSES[key] , RESPONSES[value]]
+      responses_data = [key, value]
       csv_line = responses_data.join(",")
       file.puts csv_line
     end
   end
 end
 
-
-
 @bot = "bot:   ".colorize(:red)
-puts @bot + "Talk to me! If you would like to add more expressions just type 'add'"
-puts @bot + "Hello, what's your name?"
-name = gets.chomp
-puts @bot + "Hello #{name}"
-input = gets.chomp
+say ("Talk to me! If you would like to add more expressions just type 'add', or type 'quit' to quit!")
+say ("Hello, what's your name?")
+name = wait_for_user
+say ("Hello #{name}")
+input = wait_for_user
 while input != 'quit' do
   puts get_response(input)
-  input = gets.chomp
+  input = wait_for_user
   if input == 'add'
   	add_response
-  	input = gets.chomp
+  	input = wait_for_user
   elsif input == 'save'
     save_file
     puts "saved"
+    input == wait_for_user
   end
 end
 
